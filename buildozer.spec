@@ -1,23 +1,26 @@
 [app]
-title = Terminal Quest
-package.name = terminalquest
-package.domain = org.example
+title = Pixel Realm RPG
+package.name = pixelrealmrpg
+package.domain = org.vdev
 
 source.dir = .
-source.include_exts = py,png,jpg,jpeg,ttf,txt
+source.include_exts = py,png,jpg,jpeg,atlas,ogg,wav,ttf,json,tmx,tsx
 
-version = 0.1
+version = 0.1.0
 
 requirements = python3,pygame
 
 orientation = landscape
-fullscreen = 0
+fullscreen = 1
 
-# Icon/presplash: bỏ ảnh vào assets/ rồi bỏ comment 2 dòng dưới
-# icon.filename = %(source.dir)s/assets/images/icon.png
-# presplash.filename = %(source.dir)s/assets/images/presplash.png
+icon.filename = %(source.dir)s/assets/sprites/icon.png
 
-android.permissions = INTERNET
+android.permissions = INTERNET, ACCESS_NETWORK_STATE
+android.api = 33
+android.minapi = 21
+android.ndk = 25b
+android.archs = arm64-v8a, armeabi-v7a
+android.allow_backup = True
 
 [buildozer]
 log_level = 2
