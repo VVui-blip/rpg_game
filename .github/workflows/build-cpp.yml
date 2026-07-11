@@ -1,0 +1,83 @@
+name: Build Android APK (C++/SDL2)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch: {}
+
+env:
+  SDL2_TAG: release-2.30.9
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code game
+        uses: actions/checkout@v4
+        with:
+          path: game
+
+      - name: Clone khung Android chính thức của SDL2
+        run: |
+          git clone --branch "$SDL2_TAG" --depth 1 https://github.com/libsdl-org/SDL.git sdl2-src
+
+      - name: Ghép project (khung SDL2 + source game)
+        run: |
+          set -e
+          mkdir -p android-project
+          cp -r sdl2-src/android-project/. android-project/
+
+          # SDL2 source cần nằm trong app/jni/SDL để CMakeLists gốc add_subdirectory(SDL) tìm thấy
+          rm -rf android-project/app/jni/SDL
+          cp -r sdl2-src android-project/app/jni/SDL
+
+          # Thay source mặc định bằng code game thật
+          rm -rf android-project/app/jni/src
+          mkdir -p android-project/app/jni/src
+          cp game/src/*.cpp android-project/app/jni/src/
+          cp game/cmake/CMakeLists.txt android-project/app/jni/src/CMakeLists.txt
+
+          # Bật build bằng CMake thay vì ndk-build mặc định
+          sed -i 's/buildWithCMake = false/buildWithCMake = true/' android-project/app/build.gradle || true
+
+          # Ép orientation landscape cho game (tuỳ chọn, sửa lại nếu cần portrait)
+          sed -i 's/android:screenOrientation="[^"]*"/android:screenOrientation="landscape"/' \
+            android-project/app/src/main/AndroidManifest.xml || true
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cài NDK & CMake qua sdkmanager
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "ndk;25.2.9519653" "cmake;3.22.1"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> "$GITHUB_ENV"
+
+      - name: Build APK (debug)
+        working-directory: android-project
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Tìm APK
+        id: locate_apk
+        run: |
+          APK_PATH=$(find android-project/app/build/outputs/apk -name "*.apk" | head -n 1)
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-apk-cpp-${{ github.sha }}
+          path: ${{ steps.locate_apk.outputs.apk_path }}
+          if-no-files-found: error
+          retention-days: 14
