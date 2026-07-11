@@ -435,11 +435,39 @@ def build_foliage_assets():
 
 
 # ---------------------------------------------------------------------------
+# APP ICON: khiên pixel art đơn giản dùng làm icon.png cho buildozer.spec
+# ---------------------------------------------------------------------------
+def build_icon():
+    size = 64  # canvas art-pixel, upscale x8 -> 512x512
+    img = Image.new("RGBA", (size, size), TRANSPARENT)
+    d = ImageDraw.Draw(img)
+    cx = size // 2
+    # nền tròn bo (giả lập bằng oval)
+    d.ellipse([2, 2, size - 3, size - 3], fill=(150, 120, 90))
+    d.ellipse([6, 6, size - 7, size - 7], fill=(126, 200, 80))
+    # khiên
+    shield_pts = [(cx, 12), (size - 16, 22), (size - 16, 38), (cx, size - 10),
+                  (16, 38), (16, 22)]
+    d.polygon(shield_pts, fill=(210, 60, 60), outline=(80, 30, 30))
+    d.polygon([(cx, 18), (size - 22, 26), (size - 22, 36), (cx, size - 18),
+               (22, 36), (22, 26)], fill=(230, 90, 90))
+    # kiếm chéo giữa khiên
+    d.line([(cx - 10, cx - 6), (cx + 10, cx + 10)], fill=(230, 230, 235), width=3)
+    d.line([(cx - 12, cx + 8), (cx + 4, cx - 8)], fill=(200, 170, 60), width=3)
+
+    icon_path = os.path.join(SPRITES, "icon.png")
+    os.makedirs(os.path.dirname(icon_path), exist_ok=True)
+    img.resize((512, 512), Image.NEAREST).save(icon_path)
+    print("assets/sprites/icon.png -> 512x512 app icon")
+
+
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     build_tileset()
     build_player_assets()
     build_npc_assets()
     build_mob_assets()
     build_foliage_assets()
+    build_icon()
     print(CHARACTER_ROW_MAP_COMMENT)
     print("\nHoàn tất sinh asset gốc vào assets/sprites/")
