@@ -8,7 +8,7 @@ source.include_exts = py,png,jpg,jpeg,atlas,ogg,wav,ttf,json,tmx,tsx
 
 version = 0.1.0
 
-requirements = python3,pygame-ce
+requirements = python3,pygame-ce,sdl2,sdl2_image,sdl2_mixer,sdl2_ttf
 
 orientation = landscape
 fullscreen = 1
