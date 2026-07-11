@@ -142,5 +142,28 @@ def main():
     sys.exit()
 
 
+def _write_crash_log(exc: Exception):
+    """Ghi traceback ra file trên bộ nhớ máy, không cần adb/logcat.
+    Trên Android: /sdcard/Android/data/<package>/files/crash.txt
+    Trên desktop: ./crash.txt (thư mục hiện tại)."""
+    import traceback
+    log_path = "crash.txt"
+    try:
+        from jnius import autoclass
+        PythonActivity = autoclass("org.kivy.android.PythonActivity")
+        log_path = PythonActivity.mActivity.getExternalFilesDir(None).getAbsolutePath() + "/crash.txt"
+    except Exception:
+        pass  # không phải Android (chạy desktop) -> dùng path mặc định
+    try:
+        with open(log_path, "w", encoding="utf-8") as f:
+            traceback.print_exc(file=f)
+    except Exception:
+        pass  # nếu ghi file cũng lỗi thì thôi, ít nhất traceback vẫn in ra stdout
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        _write_crash_log(e)
+        raise
